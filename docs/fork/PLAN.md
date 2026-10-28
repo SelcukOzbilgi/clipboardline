@@ -53,7 +53,10 @@ Bu Mac'te resmi uygulama ve `Tendedero` veri klasörü yok (2026-10-28 kontrol e
 ## Komutlar
 
 ```sh
-# Derleme (yerel, kalıcı imzayla)
+# Bir kerelik: kalıcı yerel imza sertifikası (login keychain parolasını sorar)
+bash scripts/fork-signing-setup.sh
+
+# Derleme (sertifika varsa onunla, yoksa ad-hoc imzalar)
 bash scripts/build-fork.sh
 open build/ClipBoardLine.app
 
