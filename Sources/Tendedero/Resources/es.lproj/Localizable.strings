@@ -496,3 +496,15 @@
 "Focus previous pane" = "Enfocar el panel anterior";
 
 "Undo Move to Trash" = "Deshacer mover a la papelera";
+
+"Empty Trash…" = "Vaciar la Papelera…";
+
+"Empty Trash?" = "¿Vaciar la Papelera?";
+
+"Empty Trash" = "Vaciar la Papelera";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "Se eliminarán permanentemente %d elementos de la Papelera, incluidos los fijados y sus copias de la app. No se puede deshacer. Los archivos originales se mantienen en su sitio.";
+
+"%d items deleted permanently" = "%d elementos eliminados permanentemente";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "Los elementos se eliminan permanentemente tras %d días en la Papelera, salvo los fijados y los que están en carpetas o etiquetas.";

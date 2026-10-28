@@ -90,6 +90,7 @@ final class LibraryNativeWindow: NSWindow {
         model.onNameAndPinBatchRequested = { [weak self] ids in self?.nameAndPin(ids) }
         model.onExportRequested = { [weak self] in self?.exportSelection() }
         model.onTrashRequested = { [weak self] in self?.confirmTrash() }
+        model.onEmptyTrashRequested = { [weak self] in self?.confirmEmptyTrash() }
         model.onCloseRequested = { [weak self] in
             guard let window = self?.window else { return }
             if window.styleMask.contains(.fullScreen) { window.toggleFullScreen(nil) } else { window.performClose(nil) }
@@ -286,6 +287,21 @@ final class LibraryNativeWindow: NSWindow {
             guard response == .alertFirstButtonReturn, let self, self.flush() else { return }; self.model.trashSelection(snapshot)
         }
     }
+    /// The count shown is the snapshot deleted; pinned items and items in
+    /// folders or tags are included, external original files are not touched.
+    func confirmEmptyTrash() {
+        guard model.flushEdits() else { return }
+        let snapshot: [UUID]
+        do { snapshot = try model.store.trashSnapshot() } catch { model.report(error.localizedDescription); return }
+        let alert = NSAlert(); alert.alertStyle = .warning; alert.messageText = L("Empty Trash?")
+        alert.informativeText = String(format: L("%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place."), snapshot.count)
+        alert.addButton(withTitle: L("Empty Trash")).hasDestructiveAction = true; alert.addButton(withTitle: L("Cancel"))
+        alert.buttons.first?.isEnabled = !snapshot.isEmpty
+        presentAlert(alert) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self, self.flush() else { return }
+            self.model.perform { self.model.report(String(format: L("%d items deleted permanently"), try self.model.store.emptyTrash(snapshot).count)) }
+        }
+    }
     func exportSelection(ids: [UUID]? = nil) {
         guard model.flushEdits() else { return }
         let snapshot = ids ?? model.actionIDs; guard !snapshot.isEmpty else { return }
@@ -318,6 +334,13 @@ final class LibraryNativeWindow: NSWindow {
                     Button(L("Clear filters")) { model.clearFilters() }.controlSize(.small)
                 }
             }.padding(.horizontal, 20).padding(.vertical, 10).background(.bar)
+            if model.query.scope == .trash {
+                HStack {
+                    Text(String(format: L("Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags."), LibraryStore.trashPurgeDays)).font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button(L("Empty Trash…")) { model.onEmptyTrashRequested?() }.controlSize(.small).disabled(model.ids.isEmpty)
+                }.padding(.horizontal, 20).padding(.vertical, 7)
+            }
             if model.query.scope == .recent {
                 Text(historyHint).font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 20).padding(.vertical, 7)
             }

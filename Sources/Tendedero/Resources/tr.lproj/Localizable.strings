@@ -496,3 +496,15 @@
 "Focus previous pane" = "Önceki bölmeye odaklan";
 
 "Undo Move to Trash" = "Çöp’e taşımayı geri al";
+
+"Empty Trash…" = "Çöp Kutusu'nu boşalt…";
+
+"Empty Trash?" = "Çöp Kutusu boşaltılsın mı?";
+
+"Empty Trash" = "Çöp Kutusu'nu boşalt";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "Çöp Kutusu'ndaki %d içerik, sabitlenmiş olanlar ve uygulama kopyaları dahil kalıcı olarak silinecek. Bu işlem geri alınamaz. Orijinal dosyalar yerinde kalır.";
+
+"%d items deleted permanently" = "%d içerik kalıcı olarak silindi";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "Çöp Kutusu'nda %d günü geçen içerikler kalıcı olarak silinir; sabitlenmiş olanlar ve klasörde ya da etikette olanlar hariç.";

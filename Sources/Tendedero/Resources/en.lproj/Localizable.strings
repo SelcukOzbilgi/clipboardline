@@ -496,3 +496,15 @@
 "Focus previous pane" = "Focus previous pane";
 
 "Undo Move to Trash" = "Undo Move to Trash";
+
+"Empty Trash…" = "Empty Trash…";
+
+"Empty Trash?" = "Empty Trash?";
+
+"Empty Trash" = "Empty Trash";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place.";
+
+"%d items deleted permanently" = "%d items deleted permanently";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags.";

@@ -32,6 +32,9 @@ final class LibraryDatabase {
         sqlite3_busy_timeout(handle, 3000)
         do {
             try execute("PRAGMA foreign_keys=ON")
+            // Freed rows and pages are zeroed, so purged clipboard content is
+            // not left in unused database space. Applies per connection.
+            try execute("PRAGMA secure_delete=ON")
             if verify { guard try rows("PRAGMA quick_check").first?.values.first?.string == "ok" else { throw Failure(code: SQLITE_CORRUPT) } }
         } catch { sqlite3_close(handle); handle = nil; throw error }
     }

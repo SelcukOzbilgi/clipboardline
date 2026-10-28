@@ -496,3 +496,15 @@
 "Focus previous pane" = "이전 패널로 포커스 이동";
 
 "Undo Move to Trash" = "휴지통으로 이동 실행 취소";
+
+"Empty Trash…" = "휴지통 비우기…";
+
+"Empty Trash?" = "휴지통을 비우시겠습니까?";
+
+"Empty Trash" = "휴지통 비우기";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "휴지통의 항목 %d개가 고정된 항목과 앱 사본을 포함해 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다. 원본 파일은 그대로 유지됩니다.";
+
+"%d items deleted permanently" = "항목 %d개를 영구적으로 삭제함";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "휴지통에 %d일 넘게 있던 항목은 영구적으로 삭제됩니다. 고정된 항목과 폴더 또는 태그에 있는 항목은 제외됩니다.";

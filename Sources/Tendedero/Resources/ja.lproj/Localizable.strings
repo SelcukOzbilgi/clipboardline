@@ -496,3 +496,15 @@
 "Focus previous pane" = "前のペインにフォーカス";
 
 "Undo Move to Trash" = "ゴミ箱への移動を取り消す";
+
+"Empty Trash…" = "ゴミ箱を空にする…";
+
+"Empty Trash?" = "ゴミ箱を空にしますか?";
+
+"Empty Trash" = "ゴミ箱を空にする";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "ゴミ箱の%d項目が、ピン留めした項目とアプリ内のコピーを含めて完全に削除されます。この操作は取り消せません。元のファイルはそのまま残ります。";
+
+"%d items deleted permanently" = "%d項目を完全に削除しました";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "ゴミ箱に%d日を超えて置かれた項目は完全に削除されます(ピン留めした項目と、フォルダまたはタグ内の項目を除く)。";

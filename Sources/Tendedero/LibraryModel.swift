@@ -52,6 +52,7 @@ import Combine
     var collectionStats: (() -> (configurations: Int, refreshes: Int)?)?
     var onExportRequested: (() -> Void)?
     var onTrashRequested: (() -> Void)?
+    var onEmptyTrashRequested: (() -> Void)?
     var onCloseRequested: (() -> Void)?
     var onFlushPreview: () -> Bool = { true }
     private var flushingPreview = false
