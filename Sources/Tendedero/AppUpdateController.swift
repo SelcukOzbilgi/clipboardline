@@ -348,11 +348,16 @@ final class AppUpdateController: ObservableObject {
     private var configuration: (UpdateRepository, Data, Int)? {
         guard enabled else { return nil }
         if let configured { return configured() }
-        guard Bundle.main.bundleIdentifier == "local.clipboardline.review",
-              let slug = Bundle.main.object(forInfoDictionaryKey: "ClipboardLineUpdateRepository") as? String,
-              let encoded = Bundle.main.object(forInfoDictionaryKey: "ClipboardLineUpdatePublicKey") as? String,
+        return Self.bundledConfiguration(info: Bundle.main.infoDictionary ?? [:], build: AppIdentity.build)
+    }
+
+    /// Only the official bundle ID may enable the private GitHub updater.
+    nonisolated static func bundledConfiguration(info: [String: Any], build: String) -> (UpdateRepository, Data, Int)? {
+        guard info["CFBundleIdentifier"] as? String == "local.clipboardline.review",
+              let slug = info["ClipboardLineUpdateRepository"] as? String,
+              let encoded = info["ClipboardLineUpdatePublicKey"] as? String,
               let key = Data(base64Encoded: encoded), key.count == 32,
-              let build = Int(AppIdentity.build) else { return nil }
+              let build = Int(build) else { return nil }
         let parts = slug.split(separator: "/", omittingEmptySubsequences: false)
         guard parts.count == 2, let repository = try? UpdateRepository(owner: String(parts[0]), name: String(parts[1])) else { return nil }
         return (repository, key, build)
