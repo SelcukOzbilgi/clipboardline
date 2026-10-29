@@ -232,7 +232,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         line.onLinkPreviewRequested = { [weak self] in self?.showLinkPreview($0) }
         line.onLinkItemsVisible = { [weak self] in self?.metadataService?.request($0) }
         let historyTimer = Timer(timeInterval: 3600, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.line.prune() }
+            MainActor.assumeIsolated { self?.line.prune(); self?.maintainLibrary() }
         }
         RunLoop.main.add(historyTimer, forMode: .common)
         self.historyTimer = historyTimer
@@ -258,6 +258,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         setUpAutomaticUpdates()
         if let store = line.library {
             let search = LibraryImageSearch(store: store); imageSearch = search; store.imageSearch = search; search.start()
+            maintainLibrary()
         }
 
         line.onImageMarkupRequested = { [weak self] id in self?.showPreview(id); self?.preview?.beginMarkup() }
@@ -1087,6 +1088,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         recorder.show()
     }
 
+    /// At launch and hourly: permanently delete Trash older than
+    /// LibraryStore.trashPurgeDays and old migration backups.
+    private func maintainLibrary() {
+        guard let store = line.library else { return }
+        do { try store.purgeExpiredTrash(); try store.pruneBackups() } catch { line.notice = error.localizedDescription }
+        store.compactAfterPurge()
+    }
+
     private func confirmClearHistory(kind: LibraryKind? = nil) {
         guard flushPreviewEdits(), libraryController?.flush() ?? true, let store = line.library else { return }
         let snapshot: UnsavedHistorySnapshot
@@ -1833,6 +1842,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .retain, .restore:
             do { if action == .retain { try line.library?.retain(snapshot.ids) } else { try line.library?.restore(snapshot.ids) } }
             catch { reportActionStatus(error.localizedDescription) }
+        case .emptyTrash: library()?.confirmEmptyTrash()
         case .scopeSaved: library()?.model.changeScope(.saved)
         case .scopeFavorites: library()?.model.changeScope(.favorites)
         case .scopeUnorganized: library()?.model.changeScope(.unorganized)

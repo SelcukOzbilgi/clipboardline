@@ -246,7 +246,10 @@ extension String {
             // Durable intent also covers a crash between creating a new PNG
             // and committing its record; only unpublished/retired assets go
             // to recoverable Trash, never external source screenshots.
-            "CREATE TABLE IF NOT EXISTS image_markup_garbage(path TEXT PRIMARY KEY)"
+            "CREATE TABLE IF NOT EXISTS image_markup_garbage(path TEXT PRIMARY KEY)",
+            // Durable intent for files of permanently deleted items; drained
+            // after the commit and at launch, removed from disk (not Trash).
+            "CREATE TABLE IF NOT EXISTS purged_files(path TEXT PRIMARY KEY)"
         ] { try db.execute(sql) }
         if try !db.rows("PRAGMA table_info(text_identity)").contains(where: { $0["name"]?.string == "version" }) {
             try db.execute("ALTER TABLE text_identity ADD COLUMN version INTEGER NOT NULL DEFAULT 1")
@@ -255,6 +258,7 @@ extension String {
         try backfillTextIdentity()
         try db.execute("PRAGMA user_version=1")
         drainMarkupGarbage()
+        drainPurgedFiles()
     }
     private func migrateLegacy() throws {
         guard try db.rows("SELECT value FROM metadata WHERE key='migration-v1'").isEmpty else { return }
@@ -899,6 +903,121 @@ extension String {
             expired += try LibrarySQL.decode(db.rows(sql, [.text(kind.rawValue), .real(cutoff.timeIntervalSince1970)])).filter { ($0.lastCapturedAt ?? $0.createdAt) <= cutoff }
         }
         if !expired.isEmpty { try trash(expired.map(\.id)) }
+    }
+    /// Trash stays recoverable this long, independent of retention settings;
+    /// then the item is deleted permanently. Migration backups use the same age.
+    static let trashPurgeDays = 30
+    /// An explicit removal (or text dedup) keeps pin, folder and tag rows, so
+    /// such an item can sit in Trash while protected. Only Empty Trash deletes it.
+    private static let protectedWhere = "(i.favorite=1 OR EXISTS(SELECT 1 FROM item_collections c WHERE c.item=i.id) OR EXISTS(SELECT 1 FROM item_tags t WHERE t.item=i.id))"
+    @discardableResult func purgeExpiredTrash() throws -> [UUID] {
+        let cutoff = now().addingTimeInterval(-Double(Self.trashPurgeDays) * 86400)
+        let rows = try db.rows("SELECT i.id FROM items i WHERE i.deleted IS NOT NULL AND i.deleted<=? AND NOT \(Self.protectedWhere)", [.real(cutoff.timeIntervalSince1970)])
+        return try permanentlyDelete(rows.compactMap { $0["id"]?.string.flatMap(UUID.init(uuidString:)) })
+    }
+    /// Empty Trash confirms this exact set; items trashed later are kept.
+    func trashSnapshot() throws -> [UUID] {
+        try db.rows("SELECT id FROM items WHERE deleted IS NOT NULL ORDER BY id").compactMap { $0["id"]?.string.flatMap(UUID.init(uuidString:)) }
+    }
+    @discardableResult func emptyTrash(_ snapshot: [UUID]) throws -> [UUID] { try permanentlyDelete(snapshot) }
+    /// Deletes the row and everything keyed by it in one transaction, then the
+    /// files the app created for it. External originals are never candidates:
+    /// originalPath is provenance only and drainPurgedFiles checks ownership.
+    private func permanentlyDelete(_ ids: [UUID]) throws -> [UUID] {
+        guard !ids.isEmpty else { return [] }
+        var deleted = [UUID]()
+        try db.transaction {
+            var seen = Set<UUID>()
+            for id in ids where seen.insert(id).inserted {
+                // Re-checked under the writer lock: a restored item is kept.
+                guard let value = try LibrarySQL.decode(db.rows("SELECT payload FROM items WHERE id=? AND deleted IS NOT NULL", [.text(id.uuidString)])).first else { continue }
+                var paths = [value.path, value.markupBasePath, value.recordingOriginalPath, value.thumbnailPath].compactMap { $0 }
+                paths += [files.inbox.appendingPathComponent("Texts/Text \(id).txt").path, files.inbox.appendingPathComponent("Links/Link \(id).webloc").path]
+                paths += files.files(in: thumbnailsFolder) { $0.lastPathComponent.hasPrefix("\(id)-") }.map(\.path)
+                for path in paths {
+                    try db.execute("DELETE FROM image_markup_garbage WHERE path=?", [.text(path)])
+                    try db.execute("INSERT OR IGNORE INTO purged_files VALUES(?)", [.text(path)])
+                }
+                for sql in ["DELETE FROM search_fts WHERE id=?", "DELETE FROM item_collections WHERE item=?", "DELETE FROM item_tags WHERE item=?",
+                            "DELETE FROM text_identity WHERE item=?", "DELETE FROM image_analysis WHERE item=?", "DELETE FROM items WHERE id=?"] {
+                    try db.execute(sql, [.text(id.uuidString)])
+                }
+                deleted.append(id)
+            }
+            if !deleted.isEmpty { try db.execute("INSERT OR REPLACE INTO metadata(key,value) VALUES('purge-compaction','pending')") }
+        }
+        guard !deleted.isEmpty else { return [] }
+        invalidateShelfUndo(deleted); invalidateTrashUndo(deleted)
+        drainPurgedFiles(); compactAfterPurge()
+        changed(); return deleted
+    }
+    /// Managed image/recording copies, link thumbnails and materialized
+    /// text/link files only; a symlink or a file elsewhere is never removed.
+    private func isPurgeable(_ url: URL) -> Bool {
+        if files.isAppCopy(url) { return true }
+        let folder = url.deletingLastPathComponent().standardizedFileURL, name = url.lastPathComponent
+        guard files.isRegularFile(url), folder.resolvingSymlinksInPath().path == folder.path else { return false }
+        func uuid(_ prefix: String, _ ext: String) -> Bool {
+            name.hasPrefix(prefix) && url.pathExtension == ext && UUID(uuidString: String(url.deletingPathExtension().lastPathComponent.dropFirst(prefix.count))) != nil
+        }
+        switch folder.path {
+        case thumbnailsFolder.standardizedFileURL.path: return url.pathExtension == "image"
+        case files.inbox.appendingPathComponent("Texts").standardizedFileURL.path: return uuid("Text ", "txt")
+        case files.inbox.appendingPathComponent("Links").standardizedFileURL.path: return uuid("Link ", "webloc")
+        default: return false
+        }
+    }
+    private func drainPurgedFiles() {
+        guard let queued = try? db.rows("SELECT path FROM purged_files"), !queued.isEmpty,
+              let records = try? LibrarySQL.decode(db.rows("SELECT payload FROM items WHERE kind IN ('image','link')")) else { return }
+        // A trashed item and a later live one can share a path; keep it.
+        let referenced = Set(records.flatMap { [$0.path, $0.markupBasePath, $0.recordingOriginalPath, $0.thumbnailPath].compactMap { $0 } }).union(recordingTrimPending)
+        for row in queued {
+            guard let path = row["path"]?.string else { continue }
+            let url = URL(fileURLWithPath: path)
+            do {
+                if !referenced.contains(path), isPurgeable(url) { try FileManager.default.removeItem(at: url) }
+                try db.execute("DELETE FROM purged_files WHERE path=?", [.text(path)])
+            } catch { /* Retried after the next purge or launch. */ }
+        }
+    }
+    private static let compactionQueue = DispatchQueue(label: "local.clipboardline.library.compaction", qos: .utility)
+    private var compacting = false
+    /// Runs off the main thread with its own connection; a pending flag makes
+    /// an interrupted or busy compaction retry on the next purge or launch.
+    func compactAfterPurge() {
+        guard !compacting, (try? db.rows("SELECT 1 FROM metadata WHERE key='purge-compaction'"))?.isEmpty == false else { return }
+        compacting = true
+        let url = databaseURL
+        Self.compactionQueue.async { [weak self] in
+            try? Self.compact(url)
+            DispatchQueue.main.async { MainActor.assumeIsolated { self?.compacting = false } }
+        }
+    }
+    /// FTS5 keeps deleted tokens in older segments until merged; VACUUM drops
+    /// free pages and stale cell space; TRUNCATE leaves no old WAL frames.
+    nonisolated static func compact(_ url: URL) throws {
+        let db = try LibraryDatabase(url: url, verify: false)
+        try db.execute("INSERT INTO search_fts(search_fts) VALUES('optimize')")
+        try db.execute("VACUUM")
+        try db.execute("DELETE FROM metadata WHERE key='purge-compaction'")
+        _ = try db.rows("PRAGMA wal_checkpoint(TRUNCATE)")
+    }
+    /// Migration backups hold the full pre-Library history. Call only after
+    /// the store opened; only folders this app named are removed.
+    @discardableResult func pruneBackups() throws -> Int {
+        let folder = root.appendingPathComponent("Backups", isDirectory: true), prefix = "Before-Library-"
+        guard FileManager.default.fileExists(atPath: folder.path) else { return 0 }
+        guard folder.resolvingSymlinksInPath().path == folder.standardizedFileURL.path else { throw HistoryFiles.Failure.unsafeFile }
+        let cutoff = now().addingTimeInterval(-Double(Self.trashPurgeDays) * 86400), keys: [URLResourceKey] = [.creationDateKey, .isDirectoryKey, .isSymbolicLinkKey]
+        var removed = 0
+        for url in try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: keys) {
+            let values = try url.resourceValues(forKeys: Set(keys)), name = url.lastPathComponent
+            guard name.hasPrefix(prefix), UUID(uuidString: String(name.dropFirst(prefix.count))) != nil,
+                  values.isDirectory == true, values.isSymbolicLink != true, let created = values.creationDate, created <= cutoff else { continue }
+            try FileManager.default.removeItem(at: url); removed += 1
+        }
+        return removed
     }
     func collections() throws -> [LibraryCollection] {
         try db.rows("SELECT * FROM collections ORDER BY folded,id").map { row in

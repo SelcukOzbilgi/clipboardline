@@ -496,3 +496,15 @@
 "Focus previous pane" = "Activer le volet précédent";
 
 "Undo Move to Trash" = "Annuler le déplacement vers la corbeille";
+
+"Empty Trash…" = "Vider la corbeille…";
+
+"Empty Trash?" = "Vider la corbeille ?";
+
+"Empty Trash" = "Vider la corbeille";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "%d éléments de la corbeille seront supprimés définitivement, y compris les éléments épinglés et leurs copies dans l’app. Cette action est irréversible. Les fichiers d’origine restent en place.";
+
+"%d items deleted permanently" = "%d éléments supprimés définitivement";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "Les éléments sont supprimés définitivement après %d jours dans la corbeille, sauf les éléments épinglés et ceux placés dans un dossier ou un tag.";

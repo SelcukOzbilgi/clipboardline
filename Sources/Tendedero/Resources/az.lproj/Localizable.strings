@@ -496,3 +496,15 @@
 "Focus previous pane" = "Əvvəlki bölməyə fokuslan";
 
 "Undo Move to Trash" = "Zibil qutusuna köçürməni geri al";
+
+"Empty Trash…" = "Zibil qutusunu boşalt…";
+
+"Empty Trash?" = "Zibil qutusu boşaldılsın?";
+
+"Empty Trash" = "Zibil qutusunu boşalt";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "Zibil qutusundakı %d element, sabitlənmiş elementlər və tətbiq nüsxələri daxil olmaqla həmişəlik silinəcək. Bunu geri qaytarmaq olmaz. Orijinal fayllar yerində qalır.";
+
+"%d items deleted permanently" = "%d element həmişəlik silindi";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "Zibil qutusunda %d gündən çox qalan elementlər həmişəlik silinir; sabitlənmiş elementlər və qovluqda və ya teqdə olanlar istisnadır.";

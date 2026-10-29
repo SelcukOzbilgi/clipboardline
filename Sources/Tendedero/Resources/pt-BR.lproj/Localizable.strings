@@ -496,3 +496,15 @@
 "Focus previous pane" = "Focar painel anterior";
 
 "Undo Move to Trash" = "Desfazer mover para o Lixo";
+
+"Empty Trash…" = "Esvaziar o Lixo…";
+
+"Empty Trash?" = "Esvaziar o Lixo?";
+
+"Empty Trash" = "Esvaziar o Lixo";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "%d itens no Lixo serão apagados permanentemente, incluindo itens afixados e as cópias do app. Não é possível desfazer. Os arquivos originais permanecem no lugar.";
+
+"%d items deleted permanently" = "%d itens apagados permanentemente";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "Itens são apagados permanentemente após %d dias no Lixo, exceto itens afixados e itens em pastas ou tags.";

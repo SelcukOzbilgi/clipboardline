@@ -116,6 +116,7 @@ func XCTUnwrap<T>(_ value: T?, file: StaticString = #filePath, line: UInt = #lin
 enum HistoryTestRunner {
     @MainActor static func main() {
         let libraryTrashUndoTests = LibraryTrashUndoTests()
+        let trashPurgeTests = TrashPurgeTests()
         let libraryFocusNativeTests = LibraryFocusNativeTests()
         let libraryKeyboardContractTests = LibraryKeyboardContractTests()
         let libraryKeyboardWorkflowTests = LibraryKeyboardWorkflowTests()
@@ -189,6 +190,17 @@ enum HistoryTestRunner {
             ("testTrashAndUndoAcquireTheWriterLockBeforeClockReadsOrRechecks", libraryTrashUndoTests.testTrashAndUndoAcquireTheWriterLockBeforeClockReadsOrRechecks),
             ("testJournalKeepsTheNewestEightyBatchesAndDoesNotSurviveRestart", libraryTrashUndoTests.testJournalKeepsTheNewestEightyBatchesAndDoesNotSurviveRestart),
             ("testTrashGenerationIsAdditiveAndCleanupAndShelfRemovalRotateIt", libraryTrashUndoTests.testTrashGenerationIsAdditiveAndCleanupAndShelfRemovalRotateIt),
+            ("testAutomaticPurgeDeletesOnlyTrashOlderThanThirtyDays", trashPurgeTests.testAutomaticPurgeDeletesOnlyTrashOlderThanThirtyDays),
+            ("testPurgeRemovesEveryDependentRow", trashPurgeTests.testPurgeRemovesEveryDependentRow),
+            ("testPurgeDeletesManagedFilesFromDiskAndNeverExternalOriginals", trashPurgeTests.testPurgeDeletesManagedFilesFromDiskAndNeverExternalOriginals),
+            ("testSharedManagedPathIsKeptWhileALiveItemStillUsesIt", trashPurgeTests.testSharedManagedPathIsKeptWhileALiveItemStillUsesIt),
+            ("testProtectedItemsSurviveAutomaticPurgeButEmptyTrashDeletesThem", trashPurgeTests.testProtectedItemsSurviveAutomaticPurgeButEmptyTrashDeletesThem),
+            ("testEmptyTrashDeletesOnlyTheConfirmedItemsStillInTrash", trashPurgeTests.testEmptyTrashDeletesOnlyTheConfirmedItemsStillInTrash),
+            ("testUndoJournalsNeverRestoreAPurgedItem", trashPurgeTests.testUndoJournalsNeverRestoreAPurgedItem),
+            ("testPendingFileDeletionsAreRetriedAtLaunchWithOwnershipChecks", trashPurgeTests.testPendingFileDeletionsAreRetriedAtLaunchWithOwnershipChecks),
+            ("testSecureDeleteAndCompactionLeaveNoPurgedTextInTheDatabaseFiles", trashPurgeTests.testSecureDeleteAndCompactionLeaveNoPurgedTextInTheDatabaseFiles),
+            ("testMigrationBackupsOlderThanThirtyDaysArePruned", trashPurgeTests.testMigrationBackupsOlderThanThirtyDaysArePruned),
+            ("testEmptyTrashIsInTheActionsPalette", trashPurgeTests.testEmptyTrashIsInTheActionsPalette),
             ("testGridSelectionRevealDoesNotStealEditorFocusAndExplicitEntryStillWorks", libraryFocusNativeTests.testGridSelectionRevealDoesNotStealEditorFocusAndExplicitEntryStillWorks),
             ("testListSelectionRevealDoesNotStealEditorFocusAndExplicitEntryStillWorks", libraryFocusNativeTests.testListSelectionRevealDoesNotStealEditorFocusAndExplicitEntryStillWorks),
             ("testNativeContentDoesNotReviveDisabledKeysOrInterceptAnEditorsEquivalents", libraryFocusNativeTests.testNativeContentDoesNotReviveDisabledKeysOrInterceptAnEditorsEquivalents),

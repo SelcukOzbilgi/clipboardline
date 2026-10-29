@@ -496,3 +496,15 @@
 "Focus previous pane" = "聚焦上一个面板";
 
 "Undo Move to Trash" = "撤销移到废纸篓";
+
+"Empty Trash…" = "清倒废纸篓…";
+
+"Empty Trash?" = "要清倒废纸篓吗？";
+
+"Empty Trash" = "清倒废纸篓";
+
+"%d items in Trash will be deleted permanently, including pinned items and their app copies. This can't be undone. Original files stay in place." = "废纸篓中的 %d 个项目将被永久删除，包括已固定的项目及其应用副本。此操作无法撤销。原始文件保留不变。";
+
+"%d items deleted permanently" = "已永久删除 %d 个项目";
+
+"Items are deleted permanently after %d days in Trash, except pinned items and items in folders or tags." = "废纸篓中超过 %d 天的项目将被永久删除，已固定的项目以及文件夹或标签中的项目除外。";

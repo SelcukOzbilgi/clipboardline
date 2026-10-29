@@ -1,6 +1,7 @@
 import Foundation
 
-/// All destructive app operations use recoverable Trash. Ownership is
+/// Destructive app operations use recoverable Trash; only Library Trash purge
+/// (LibraryStore.permanentlyDelete) removes app copies from disk. Ownership is
 /// checked from the current filesystem, never from a user-visible label.
 struct HistoryFiles {
     enum Failure: Error, LocalizedError {
