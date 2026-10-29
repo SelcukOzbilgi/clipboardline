@@ -149,6 +149,9 @@ enum KeyboardAction: String, CaseIterable, Identifiable {
             return defaults.filter { $0.keyCode == 117 }
         }
         if self == .paste && context == .textPreview { return defaults }
+        // Fork: Command-Z also undoes a take-down on the line. Previews keep
+        // Backspace only, so editors and markup retain their own Command-Z.
+        if self == .undoRemoveFromLine && context == .line { return defaults + [KeyShortcut(keyCode: 6, modifiers: cmdKey, keyLabel: "Z")] }
         return defaults
     }
     var quickSelectionSlot: Int? { Self.quickSelectionActions.firstIndex(of: self) }
